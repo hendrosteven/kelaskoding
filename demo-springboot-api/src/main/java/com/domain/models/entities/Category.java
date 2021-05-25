@@ -11,9 +11,8 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "tbl_categories")
-public class Category implements Serializable{
+public class Category extends BaseEntity<String> implements Serializable{
     
-   
     private static final long serialVersionUID = 1L;
 
     @Id

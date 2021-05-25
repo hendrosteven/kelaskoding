@@ -1,14 +1,20 @@
 package com.domain.controllers;
 
+import java.util.Arrays;
+
 import javax.validation.Valid;
 
 import com.domain.dto.CategoryData;
 import com.domain.dto.ResponseData;
+import com.domain.dto.SearchData;
 import com.domain.models.entities.Category;
 import com.domain.services.CategoryService;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
@@ -24,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
-    
+
     @Autowired
     private CategoryService categoryService;
 
@@ -32,11 +38,11 @@ public class CategoryController {
     private ModelMapper modelMapper;
 
     @PostMapping
-    public ResponseEntity<ResponseData<Category>> create(@Valid @RequestBody CategoryData categoryData, Errors errors){
+    public ResponseEntity<ResponseData<Category>> create(@Valid @RequestBody CategoryData categoryData, Errors errors) {
 
         ResponseData<Category> responseData = new ResponseData<>();
 
-        if(errors.hasErrors()){
+        if (errors.hasErrors()) {
             for (ObjectError error : errors.getAllErrors()) {
                 responseData.getMessages().add(error.getDefaultMessage());
             }
@@ -51,20 +57,20 @@ public class CategoryController {
     }
 
     @GetMapping
-    public Iterable<Category> findAll(){
+    public Iterable<Category> findAll() {
         return categoryService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Category findOne(@PathVariable("id") Long id){
+    public Category findOne(@PathVariable("id") Long id) {
         return categoryService.findOne(id);
     }
 
     @PutMapping
-    public ResponseEntity<ResponseData<Category>> update(@Valid @RequestBody CategoryData categoryData, Errors errors){
+    public ResponseEntity<ResponseData<Category>> update(@Valid @RequestBody CategoryData categoryData, Errors errors) {
         ResponseData<Category> responseData = new ResponseData<>();
 
-        if(errors.hasErrors()){
+        if (errors.hasErrors()) {
             for (ObjectError error : errors.getAllErrors()) {
                 responseData.getMessages().add(error.getDefaultMessage());
             }
@@ -75,6 +81,34 @@ public class CategoryController {
         Category category = modelMapper.map(categoryData, Category.class);
         responseData.setStatus(true);
         responseData.setPayload(categoryService.save(category));
+        return ResponseEntity.ok(responseData);
+    }
+
+    @PostMapping("/search/{size}/{page}")
+    public Iterable<Category> findByname(@RequestBody SearchData searchData, @PathVariable("size") int size,
+            @PathVariable("page") int page) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        return categoryService.findByName(searchData.getSearchKey(), pageable);
+    }
+
+    @PostMapping("/search/{size}/{page}/{sort}")
+    public Iterable<Category> findByNameAsc(@RequestBody SearchData searchData, @PathVariable("size") int size,
+            @PathVariable("page") int page, @PathVariable("sort") String sort){
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id"));   
+        if(sort.equalsIgnoreCase("desc")){
+            pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        }        
+        return categoryService.findByName(searchData.getSearchKey(), pageable);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<ResponseData<Iterable<Category>>> createBatch(@RequestBody Category[] categories) {
+
+        ResponseData<Iterable<Category>> responseData = new ResponseData<>();
+        responseData.setPayload(categoryService.saveBatch(Arrays.asList(categories)));      
+        responseData.setStatus(true);        
         return ResponseEntity.ok(responseData);
     }
 
