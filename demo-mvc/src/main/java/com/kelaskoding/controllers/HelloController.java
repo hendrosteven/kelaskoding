@@ -15,7 +15,7 @@ public class HelloController {
     @GetMapping
     public ResponseEntity<?> hello(){
         Map<String, String> data = new HashMap<String, String>();
-        data.put("greeting","Welcome to Spring!!");
+        data.put("greeting","Welcome to SpringBoot!");
         return ResponseEntity.ok(data);
     }
 }
